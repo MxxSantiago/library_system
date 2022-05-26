@@ -13,6 +13,39 @@ void create() {
     FILE *fp = NULL;
     Book book;
     int status;
+    unsigned int enteredID, flag = 0;
+
+    header("Create Or Add A Book");
+
+    while (!flag) {
+        fp = fopen(DATABASE, "rb");
+
+        if (fp == NULL) {
+            printf("File is not opened\n");
+            exit(1);
+        }
+
+        if (fseek(fp, FILE_SIZE, SEEK_SET) != 0) {
+            fclose(fp);
+            printf("\nAn error occurred while reading the file\n");
+            exit(1);
+        }
+
+        flag = 1;
+
+        printf("Book ID: ");
+        scanf("%u", &enteredID);
+
+        while (fread(&book, sizeof(book), 1,
+                     fp)) {
+            if (book.id == enteredID) {
+                printf("\nThe entered ID is already in use, enter another one\n\n");
+                flag = 0;
+            }
+        }
+
+        if (flag) book.id = enteredID;
+    }
 
     fp = fopen(DATABASE, "ab+");
 
@@ -20,12 +53,6 @@ void create() {
         printf("File is not opened\n");
         exit(1);
     }
-
-    header("Create Or Add A Book");
-
-    printf("Book ID: ");
-    fflush(stdin);
-    scanf("%u", &book.books_id);
 
     do {
         printf("\nBook Name: ");
@@ -62,11 +89,11 @@ void create() {
     } while (!status);
     do {
         printf("\nEnter date in format (day/month/year): ");
-        scanf("%d/%d/%d", &book.bookIssueDate.day,
-              &book.bookIssueDate.month,
-              &book.bookIssueDate.year);
+        scanf("%d/%d/%d", &book.issueDate.day,
+              &book.issueDate.month,
+              &book.issueDate.year);
 
-        status = isDateValid(&book.bookIssueDate);
+        status = isDateValid(&book.issueDate);
 
         if (!status) printf("\nInvalid input, enter a valid date.\n");
     } while (!status);
@@ -79,7 +106,7 @@ void search() {
     int found = 0;
     char bookName[BOOK_NAME_LENGTH];
     FILE *fp = NULL;
-    Book addBookInfoInDataBase;
+    Book book;
 
     fp = fopen(DATABASE, "rb");
 
@@ -100,22 +127,22 @@ void search() {
     fflush(stdin);
     fgets(bookName, BOOK_NAME_LENGTH, stdin);
 
-    while (fread(&addBookInfoInDataBase, sizeof(addBookInfoInDataBase), 1,
+    while (fread(&book, sizeof(book), 1,
                  fp)) {
-        if (!strcmp(addBookInfoInDataBase.name, bookName)) {
+        if (!strcmp(book.name, bookName)) {
             found = 1;
             break;
         }
     }
 
     if (found) {
-        printf("\nBook id = %u\n", addBookInfoInDataBase.books_id);
-        printf("Book name = %s", addBookInfoInDataBase.name);
-        printf("Book author = %s", addBookInfoInDataBase.author);
+        printf("\nBook id = %u\n", book.id);
+        printf("Book name = %s", book.name);
+        printf("Book author = %s", book.author);
         printf("Book issue =  (%d/%d/%d)",
-               addBookInfoInDataBase.bookIssueDate.day,
-               addBookInfoInDataBase.bookIssueDate.month,
-               addBookInfoInDataBase.bookIssueDate.year);
+               book.issueDate.day,
+               book.issueDate.month,
+               book.issueDate.year);
     } else {
         printf("\nNo Record");
     }
@@ -128,7 +155,7 @@ void search() {
 void print() {
     int cantity = 0;
     FILE *fp = NULL;
-    Book addBookInfoInDataBase;
+    Book book;
 
     header("Print Books");
 
@@ -145,15 +172,15 @@ void print() {
         exit(1);
     }
 
-    while (fread(&addBookInfoInDataBase, sizeof(addBookInfoInDataBase), 1,
+    while (fread(&book, sizeof(book), 1,
                  fp)) {
-        printf("Book id = %u", addBookInfoInDataBase.books_id);
-        printf("\nBook name = %s", addBookInfoInDataBase.name);
-        printf("Book author = %s", addBookInfoInDataBase.author);
+        printf("Book id = %u", book.id);
+        printf("\nBook name = %s", book.name);
+        printf("Book author = %s", book.author);
         printf("Book issue =  (%d/%d/%d)\n\n",
-               addBookInfoInDataBase.bookIssueDate.day,
-               addBookInfoInDataBase.bookIssueDate.month,
-               addBookInfoInDataBase.bookIssueDate.year);
+               book.issueDate.day,
+               book.issueDate.month,
+               book.issueDate.year);
 
         cantity = 1;
     }
@@ -200,7 +227,7 @@ void delete() {
 
     while (fread(&book, sizeof(book), 1,
                  fp)) {
-        if (book.books_id != searchedBook) {
+        if (book.id != searchedBook) {
             fwrite(&book, sizeof(book), 1,
                    tmpFp);
         } else {
