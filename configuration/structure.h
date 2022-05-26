@@ -14,11 +14,11 @@ typedef struct {
 } Credentials;
 
 typedef struct {
-    unsigned int books_id;
+    unsigned int id;
     char name[BOOK_NAME_LENGTH];
     char author[AUTHOR_LENGTH];
     char client[CLIENT_LENGTH];
-    Date bookIssueDate;
+    Date issueDate;
 } Book;
 
 #define UNTITLED7_STRUCTURE_H
