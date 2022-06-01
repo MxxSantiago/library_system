@@ -18,14 +18,14 @@ void create() {
     header("Create Or Add A Book");
 
     while (!flag) {
-        fp = fopen(DATABASE, "rb");
+        fp = fopen(LIBRARY_DATABASE, "rb");
 
         if (fp == NULL) {
             printf("File is not opened\n");
             exit(1);
         }
 
-        if (fseek(fp, FILE_SIZE, SEEK_SET) != 0) {
+        if (fseek(fp, LIBRARY_FILE_SIZE, SEEK_SET) != 0) {
             fclose(fp);
             printf("\nAn error occurred while reading the file\n");
             exit(1);
@@ -36,7 +36,7 @@ void create() {
         printf("Book ID: ");
         scanf("%u", &enteredID);
 
-        while (fread(&book, sizeof(book), 1,
+        while (fread(&book, LIBRARY_FILE_SIZE, 1,
                      fp)) {
             if (book.id == enteredID) {
                 printf("\nThe entered ID is already in use, enter another one\n\n");
@@ -47,7 +47,7 @@ void create() {
         if (flag) book.id = enteredID;
     }
 
-    fp = fopen(DATABASE, "ab+");
+    fp = fopen(LIBRARY_DATABASE, "ab");
 
     if (fp == NULL) {
         printf("File is not opened\n");
@@ -98,7 +98,7 @@ void create() {
         if (!status) printf("\nInvalid input, enter a valid date.\n");
     } while (!status);
 
-    fwrite(&book, sizeof(book), 1, fp);
+    fwrite(&book, LIBRARY_FILE_SIZE, 1, fp);
     fclose(fp);
 }
 
@@ -108,7 +108,7 @@ void search() {
     FILE *fp = NULL;
     Book book;
 
-    fp = fopen(DATABASE, "rb");
+    fp = fopen(LIBRARY_DATABASE, "rb");
 
     if (fp == NULL) {
         printf("File is not opened\n");
@@ -117,7 +117,7 @@ void search() {
 
     header("Search books");
 
-    if (fseek(fp, FILE_SIZE, SEEK_SET) != 0) {
+    if (fseek(fp, LIBRARY_FILE_SIZE, SEEK_SET) != 0) {
         fclose(fp);
         printf("\nAn error occurred while reading the file\n");
         exit(1);
@@ -127,7 +127,7 @@ void search() {
     fflush(stdin);
     fgets(bookName, BOOK_NAME_LENGTH, stdin);
 
-    while (fread(&book, sizeof(book), 1,
+    while (fread(&book, LIBRARY_FILE_SIZE, 1,
                  fp)) {
         if (!strcmp(book.name, bookName)) {
             found = 1;
@@ -159,20 +159,22 @@ void print() {
 
     header("Print Books");
 
-    fp = fopen(DATABASE, "rb");
+    fp = fopen(LIBRARY_DATABASE, "rb");
 
     if (fp == NULL) {
         printf("File is not opened\n");
         exit(1);
     }
 
-    if (fseek(fp, FILE_SIZE, SEEK_SET) != 0) {
+    if (fseek(fp, LIBRARY_FILE_SIZE, SEEK_SET) != 0) {
         fclose(fp);
         printf("Facing issue while reading file\n");
         exit(1);
     }
 
-    while (fread(&book, sizeof(book), 1,
+    rewind(fp);
+
+    while (fread(&book, LIBRARY_FILE_SIZE, 1,
                  fp)) {
         printf("Book id = %u", book.id);
         printf("\nBook name = %s", book.name);
@@ -199,19 +201,18 @@ void delete() {
     int found = 0, searchedBook = 0;
     FILE *fp = NULL;
     FILE *tmpFp = NULL;
-    Credentials credentials;
     Book book;
 
     header("Delete Book");
 
-    fp = fopen(DATABASE, "rb");
+    fp = fopen(LIBRARY_DATABASE, "rb");
 
     if (fp == NULL) {
         printf("File is not opened\n");
         exit(1);
     }
 
-    tmpFp = fopen("tmp.bin", "wb");
+    tmpFp = fopen("tmp.dat", "wb");
 
     if (tmpFp == NULL) {
         fclose(fp);
@@ -219,16 +220,13 @@ void delete() {
         exit(1);
     }
 
-    fread(&credentials, FILE_SIZE, 1, fp);
-    fwrite(&credentials, FILE_SIZE, 1, tmpFp);
-
     printf("Book ID:");
     scanf("%i", &searchedBook);
 
-    while (fread(&book, sizeof(book), 1,
+    while (fread(&book, LIBRARY_FILE_SIZE, 1,
                  fp)) {
         if (book.id != searchedBook) {
-            fwrite(&book, sizeof(book), 1,
+            fwrite(&book, LIBRARY_FILE_SIZE, 1,
                    tmpFp);
         } else {
             found = 1;
@@ -243,8 +241,8 @@ void delete() {
 
     fclose(fp);
     fclose(tmpFp);
-    remove(DATABASE);
-    rename("tmp.bin", DATABASE);
+    remove(LIBRARY_DATABASE);
+    rename("tmp.dat", LIBRARY_DATABASE);
 }
 
 void updateCredentials(void) {
@@ -255,14 +253,14 @@ void updateCredentials(void) {
 
     header("Update Credentials");
 
-    fp = fopen(DATABASE, "rb+");
+    fp = fopen(CREDENTIALS_DATABASE, "rb+");
 
     if (fp == NULL) {
         printf("File is not opened\n");
         exit(1);
     }
 
-    fread(&credentials, FILE_SIZE, 1, fp);
+    fread(&credentials, CREDENTIALS_FILE_SIZE, 1, fp);
 
     if (fseek(fp, 0, SEEK_SET) != 0) {
         fclose(fp);
@@ -281,7 +279,7 @@ void updateCredentials(void) {
     strncpy(credentials.username, username, sizeof(username));
     strncpy(credentials.password, password, sizeof(password));
 
-    fwrite(&credentials, FILE_SIZE, 1, fp);
+    fwrite(&credentials, CREDENTIALS_FILE_SIZE, 1, fp);
     fclose(fp);
 
     system("cls");
@@ -290,6 +288,50 @@ void updateCredentials(void) {
     system("pause");
 
     exit(1);
+}
+
+void sortByName() {
+    FILE *fp = NULL;
+    Book book1, book2, auxBook;
+    int NE, x, y;
+
+    fp = fopen(LIBRARY_DATABASE, "rb+");
+
+    if (fp == NULL) {
+        puts("Error");
+        exit(1);
+    } else {
+        fseek(fp, 0L, 2);
+
+        NE = ftell(fp) / LIBRARY_FILE_SIZE;
+
+        rewind(fp);
+
+        for (x = 1; x < NE; x++) {
+            for (y = 0; y < NE - x; y++) {
+                fseek(fp, y * LIBRARY_FILE_SIZE, 0);
+                fread(&book1, LIBRARY_FILE_SIZE, 1, fp);
+                fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
+                fread(&book2, LIBRARY_FILE_SIZE, 1, fp);
+
+                if (strcmp(book1.name, book2.name) > 0) {
+                    auxBook = book1;
+                    book1 = book2;
+                    book2 = auxBook;
+
+                    fseek(fp, y * LIBRARY_FILE_SIZE, 0);
+                    fwrite(&book1, LIBRARY_FILE_SIZE, 1, fp);
+                    fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
+                    fwrite(&book2, LIBRARY_FILE_SIZE, 1, fp);
+                }
+            }
+        }
+
+        rewind(fp);
+    }
+
+    system("pause");
+    fclose(fp);
 }
 
 void menu() {
@@ -303,7 +345,8 @@ void menu() {
         printf("\n3. Print");
         printf("\n4. Delete");
         printf("\n5. Update Password");
-        printf("\n6. Exit");
+        printf("\n6. Sort by name");
+        printf("\n7. Exit");
 
         printf("\n\nOption: ");
         scanf("%i", &option);
@@ -325,6 +368,9 @@ void menu() {
                 updateCredentials();
                 break;
             case 6:
+                sortByName();
+                break;
+            case 7:
                 exit(1);
             default:
                 printf("Invalid input");
