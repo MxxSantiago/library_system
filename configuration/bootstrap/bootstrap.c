@@ -12,18 +12,25 @@ void bootstrap() {
     const char defaultUsername[] = "admin\n";
     const char defaultPassword[] = "123\n";
 
-    status = fileExists(DATABASE);
+    status = fileExists(CREDENTIALS_DATABASE);
 
     if (!status) {
-        fp = fopen(DATABASE, "wb");
+        fp = fopen(CREDENTIALS_DATABASE, "wb");
 
         if (fp != NULL) {
             strncpy(credentials.password, defaultPassword,
                     sizeof(defaultPassword));
             strncpy(credentials.username, defaultUsername,
                     sizeof(defaultUsername));
-            fwrite(&credentials, FILE_SIZE, 1, fp);
+            fwrite(&credentials, CREDENTIALS_FILE_SIZE, 1, fp);
             fclose(fp);
         }
+    }
+
+    status = fileExists(LIBRARY_DATABASE);
+
+    if (!status) {
+        fp = fopen(LIBRARY_DATABASE, "wb");
+        fclose(fp);
     }
 }

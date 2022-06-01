@@ -14,14 +14,14 @@ void login() {
 
     header("Login");
 
-    fp = fopen(DATABASE, "rb");
+    fp = fopen(CREDENTIALS_DATABASE, "rb");
 
     if (fp == NULL) {
         printf("File is not opened\n");
         exit(1);
     }
 
-    fread(&credentials, FILE_SIZE, 1, fp);
+    fread(&credentials, CREDENTIALS_FILE_SIZE, 1, fp);
     fclose(fp);
 
     do {
@@ -35,7 +35,7 @@ void login() {
             (!strcmp(password, credentials.password))) {
             menu();
         } else {
-            printf("A user with this username and password does not exist");
+            printf("A user with this username and password does not exist\n\n");
             attempts++;
         }
 
