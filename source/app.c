@@ -234,7 +234,7 @@ void delete() {
     }
 
     (found) ? printf("\nBook deleted") : printf(
-            "\nBook ID not found");
+            "\nThe entered id does not belong to any book in the database");
 
     printf("\n\n");
     system("pause");
@@ -293,60 +293,202 @@ void updateCredentials(void) {
 void sortByName() {
     FILE *fp = NULL;
     Book book1, book2, auxBook;
-    int NE, x, y;
+    int elements, x, y;
+
+    header("Sort by name");
 
     fp = fopen(LIBRARY_DATABASE, "rb+");
 
     if (fp == NULL) {
-        puts("Error");
+        puts("File is not opened");
         exit(1);
-    } else {
-        fseek(fp, 0L, 2);
-
-        NE = ftell(fp) / LIBRARY_FILE_SIZE;
-
-        rewind(fp);
-
-        for (x = 1; x < NE; x++) {
-            for (y = 0; y < NE - x; y++) {
-                fseek(fp, y * LIBRARY_FILE_SIZE, 0);
-                fread(&book1, LIBRARY_FILE_SIZE, 1, fp);
-                fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
-                fread(&book2, LIBRARY_FILE_SIZE, 1, fp);
-
-                if (strcmp(book1.name, book2.name) > 0) {
-                    auxBook = book1;
-                    book1 = book2;
-                    book2 = auxBook;
-
-                    fseek(fp, y * LIBRARY_FILE_SIZE, 0);
-                    fwrite(&book1, LIBRARY_FILE_SIZE, 1, fp);
-                    fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
-                    fwrite(&book2, LIBRARY_FILE_SIZE, 1, fp);
-                }
-            }
-        }
-
-        rewind(fp);
     }
 
+    fseek(fp, 0L, 2);
+
+    elements = ftell(fp) / LIBRARY_FILE_SIZE;
+
+    rewind(fp);
+
+    for (x = 1; x < elements; x++) {
+        for (y = 0; y < elements - x; y++) {
+            fseek(fp, y * LIBRARY_FILE_SIZE, 0);
+            fread(&book1, LIBRARY_FILE_SIZE, 1, fp);
+            fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
+            fread(&book2, LIBRARY_FILE_SIZE, 1, fp);
+
+            if (strcmp(book1.name, book2.name) > 0) {
+                auxBook = book1;
+                book1 = book2;
+                book2 = auxBook;
+
+                fseek(fp, y * LIBRARY_FILE_SIZE, 0);
+                fwrite(&book1, LIBRARY_FILE_SIZE, 1, fp);
+                fseek(fp, (y + 1) * LIBRARY_FILE_SIZE, 0);
+                fwrite(&book2, LIBRARY_FILE_SIZE, 1, fp);
+            }
+        }
+    }
+
+    rewind(fp);
+
+    puts("Books sorted\n\n");
     system("pause");
+    fclose(fp);
+}
+
+void modification() {
+    FILE *fp;
+    Book book;
+    int counter = 0, bookPosition = -1, option = 0, enteredID, status;
+
+    header("Modificate books");
+
+    fp = fopen(LIBRARY_DATABASE, "rb+");
+
+    if (fp == NULL) {
+        puts("File is not opened");
+        exit(1);
+    }
+
+    printf("Book to modify ID: ");
+    scanf("%i", &enteredID);
+
+    while (fread(&book, LIBRARY_FILE_SIZE, 1, fp) > 0) {
+        if (enteredID == book.id) {
+            bookPosition = counter;
+            break;
+        }
+
+        counter++;
+    }
+
+    if (bookPosition == -1) {
+        puts("\nThe entered id does not belong to any book in the database\n\n");
+        system("pause");
+    } else {
+        while (option != 5) {
+            system("cls");
+            header("Modificate books");
+
+            puts("1. Name");
+            puts("2. Author");
+            puts("3. Client");
+            puts("4. Issue date");
+            puts("5. Return to main menu");
+
+            printf("\n\nOption: ");
+            scanf("%d", &option);
+
+            fseek(fp, bookPosition * LIBRARY_FILE_SIZE, 0);
+
+            system("cls");
+            header("Modificate books");
+
+            switch (option) {
+                case 1:
+                    header("Modificate book name");
+
+                    do {
+                        printf("Book name: ");
+                        fflush(stdin);
+                        fgets(book.name, BOOK_NAME_LENGTH, stdin);
+
+                        status = isNameValid(book.name);
+
+                        if (!status) {
+                            printf("\nName contain invalid character. Please enter again.\n\n");
+                            system("pause");
+                        }
+                    } while (!status);
+
+                    break;
+                case 2:
+                    do {
+                        header("Modificate book author");
+
+                        printf("\nAuthor Name: ");
+                        fflush(stdin);
+                        fgets(book.author, AUTHOR_LENGTH, stdin);
+
+                        status = isNameValid(book.author);
+
+                        if (!status) {
+                            printf("\nName contain invalid character. Please enter again.\n\n");
+                            system("pause");
+                        }
+                    } while (!status);
+
+                    break;
+                case 3:
+                    do {
+                        header("Modificate book client");
+
+                        printf("\nBook client: ");
+                        fflush(stdin);
+                        fgets(book.client, CLIENT_LENGTH, stdin);
+
+                        status = isNameValid(book.client);
+
+                        if (!status) {
+                            printf("\nName contain invalid character. Please enter again.\n\n");
+                            system("pause");
+                        }
+                    } while (!status);
+
+                    break;
+                case 4:
+                    header("Modificate book issue date");
+
+                    do {
+                        printf("\nIssue date (day/month/year): ");
+                        scanf("%d/%d/%d", &book.issueDate.day,
+                              &book.issueDate.month,
+                              &book.issueDate.year);
+
+                        status = isDateValid(&book.issueDate);
+
+                        if (!status) {
+                            printf("\nInvalid input, enter a valid date.\n\n");
+                            system("pause");
+                        }
+                    } while (!status);
+
+                    break;
+                case 5:
+                    break;
+                default:
+                    printf("Invalid input\n\n");
+                    system("pause");
+            }
+
+            system("cls");
+            header("Modificate books");
+            puts("the modification was carried out successfully\n");
+            system("pause");
+            system("cls");
+        }
+
+        fwrite(&book, LIBRARY_FILE_SIZE, 1, fp);
+    }
+
     fclose(fp);
 }
 
 void menu() {
     int option = 0;
 
-    do {
+    while (option != 8) {
         header("Menu");
 
-        printf("1. Create/Add");
-        printf("\n2. Search");
-        printf("\n3. Print");
-        printf("\n4. Delete");
-        printf("\n5. Update Password");
-        printf("\n6. Sort by name");
-        printf("\n7. Exit");
+        puts("1. Create/Add");
+        puts("2. Search");
+        puts("3. Print");
+        puts("4. Modification");
+        puts("5. Delete");
+        puts("6. Update Password");
+        puts("7. Sort by name");
+        puts("8. Exit");
 
         printf("\n\nOption: ");
         scanf("%i", &option);
@@ -362,20 +504,23 @@ void menu() {
                 print();
                 break;
             case 4:
-                delete();
+                modification();
                 break;
             case 5:
-                updateCredentials();
+                delete();
                 break;
             case 6:
-                sortByName();
+                updateCredentials();
                 break;
             case 7:
+                sortByName();
+                break;
+            case 8:
                 exit(1);
             default:
                 printf("Invalid input");
                 break;
         }
-    } while (option != 0);
+    }
 }
 
