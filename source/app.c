@@ -127,6 +127,8 @@ void search() {
     fflush(stdin);
     fgets(bookName, BOOK_NAME_LENGTH, stdin);
 
+    rewind(fp);
+
     while (fread(&book, LIBRARY_FILE_SIZE, 1,
                  fp)) {
         if (!strcmp(book.name, bookName)) {
@@ -139,6 +141,7 @@ void search() {
         printf("\nBook id = %u\n", book.id);
         printf("Book name = %s", book.name);
         printf("Book author = %s", book.author);
+        printf("Book client = %s", book.client);
         printf("Book issue =  (%d/%d/%d)",
                book.issueDate.day,
                book.issueDate.month,
@@ -179,6 +182,7 @@ void print() {
         printf("Book id = %u", book.id);
         printf("\nBook name = %s", book.name);
         printf("Book author = %s", book.author);
+        printf("Book client = %s", book.client);
         printf("Book issue =  (%d/%d/%d)\n\n",
                book.issueDate.day,
                book.issueDate.month,
@@ -462,11 +466,13 @@ void modification() {
                     system("pause");
             }
 
-            system("cls");
-            header("Modificate books");
-            puts("the modification was carried out successfully\n");
-            system("pause");
-            system("cls");
+            if (option != 5) {
+                system("cls");
+                header("Modificate books");
+                puts("the modification was carried out successfully\n");
+                system("pause");
+                system("cls");
+            }
         }
 
         fwrite(&book, LIBRARY_FILE_SIZE, 1, fp);
@@ -486,7 +492,7 @@ void menu() {
         puts("3. Print");
         puts("4. Modification");
         puts("5. Delete");
-        puts("6. Update Password");
+        puts("6. Update credentials");
         puts("7. Sort by name");
         puts("8. Exit");
 
