@@ -35,7 +35,7 @@ void login() {
             (!strcmp(password, credentials.password))) {
             menu();
         } else {
-            printf("A user with this username and password does not exist\n\n");
+            printf("\nA user with this username and password does not exist\n\n");
             attempts++;
         }
 
